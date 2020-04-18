@@ -1,0 +1,8 @@
+
+.expo/
+
+.shadow-cljs/
+
+app/
+
+node_modules/
