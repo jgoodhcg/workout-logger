@@ -13,11 +13,11 @@
  {:app
   {:target     :react-native
    :init-fn    app.index/init
-   :output-dir "app"
+   :output-dir "app-compiled"
    :devtools   {:autoload true
                 :preloads [shadow.expo.keep-awake]}}
 
   :test
   {:target    :node-test
-   :output-to "test/node-tests.js"
+   :output-to "tests-compiled/node-tests.js"
    :autorun   true}}}
