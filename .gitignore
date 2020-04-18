@@ -3,6 +3,10 @@
 
 .shadow-cljs/
 
-app/
+app-compiled/
+
+tests-compiled/
 
 node_modules/
+
+src/app/secrets.cljs
