@@ -107,7 +107,7 @@
 
 (defn init []
   ;; TODO move this to side effect
-  (-> firebase (.initializeApp (clj->js firebase-config)))
+  (dispatch-sync [:initialize-firebase firebase-config])
   (dispatch-sync [:initialize-db])
   (dispatch-sync [:set-version version])
   (start))

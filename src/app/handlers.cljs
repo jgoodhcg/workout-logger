@@ -49,10 +49,17 @@
               (.createUserWithEmailAndPassword email password))))
 
 (defn signup [cofx [_ email-pass-map]]
-  {:db              (:db cofx)
-   :firebase-signup email-pass-map})
+  (merge cofx {:firebase-signup email-pass-map}))
+
+(reg-fx :firebase-init
+        (fn [config]
+          (-> firebase (.initializeApp (clj->js config)))))
+
+(defn initialize-firebase [cofx [_ config]]
+  (merge cofx {:firebase-init config-js}))
 
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
 (reg-event-db :set-version [spec-validation] set-version)
 (reg-event-fx :signup [] signup)
+(reg-event-fx :initialize-firebase [] initialize-firebase)
