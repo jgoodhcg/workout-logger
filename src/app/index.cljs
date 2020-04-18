@@ -14,6 +14,7 @@
     [shadow.expo :as expo]
     [app.handlers]
     [app.subscriptions]
+    [app.secrets :as secrets]
     [app.helpers :refer [<sub >evt]]))
 
 ;; must use defonce and must refresh full app so metro can fill these in
@@ -22,22 +23,29 @@
 
 (defonce splash-img (js/require "../assets/shadow-cljs.png"))
 
-(def firebase-config {:apiKey            "api-key",
-                      :authDomain        "project-id.firebaseapp.com",
-                      :databaseURL       "https://project-id.firebaseio.com",
-                      :projectId         "project-id",
-                      :storageBucket     "project-id.appspot.com",
-                      :messagingSenderId "sender-id",
-                      :appId             "app-id",
-                      :measurementId     "G-measurement-id"})
+(def firebase-config {:apiKey            secrets/firebase-api-key
+                      :authDomain        "workout-logger-c7ccd.firebaseapp.com"
+                      :databaseURL       "https://workout-logger-c7ccd.firebaseio.com"
+                      :projectId         "workout-logger-c7ccd"
+                      :storageBucket     "workout-logger-c7ccd.appspot.com"
+                      :messagingSenderId "560616186938"
+                      :appId             "1:560616186938:web:57ff1a8dcc70d738fd0103"})
 (def styles
   ^js (-> {:surface
-           {:flex           1
-            :justify-content "center"}
+           {:flex            1
+            :justify-content "flex-end"}
 
-           :theme-switch
-           {:flex-direction  "row"
-            :justify-content "space-between"}}
+           :button
+           {:margin 8}
+
+           :buttonLogin
+           {:margin        8
+            :margin-bottom 128}
+
+           :input
+           {:margin 8}
+
+           }
           (#(cske/transform-keys csk/->camelCase %))
           (clj->js)
           (rn/StyleSheet.create)))
@@ -49,18 +57,27 @@
          theme           (.-theme props)]
      [:> paper/Surface {:style (.-surface styles)}
       [:> rn/View
-       [:> paper/Card
-        [:> paper/Card.Title {:title    "A nice Expo/Shadow-cljs template"
-                              :subtitle "For quick project startup"}]
-        [:> paper/Card.Content
-         [:> rn/View {:style (.-themeSwitch styles)}
-          [:> paper/Text {:style {:color (->> theme .-colors .-accent)}}
-           "Dark mode"]
-          [:> paper/Switch {:value           (= theme-selection :dark)
-                            :on-value-change #(>evt [:set-theme (if (= theme-selection :dark)
-                                                                  :light
-                                                                  :dark)])}]]
-         [:> paper/Paragraph (str "Version: " version)]]]]])))
+
+       ;; login
+       [:> paper/TextInput
+        {:label "email"
+         :style (.-input styles)}]
+       [:> paper/TextInput
+        {:label "password"
+         :secure-text-entry true
+         :style (.-input styles)}]
+       [:> paper/Button
+        {:icon "account"
+         :mode "contained"
+         :style (.-buttonLogin styles)}
+        "Login"]
+
+       ;; signup
+       [:> paper/Button
+        {:icon "account-plus"
+         :mode "outlined"
+         :style (.-button styles)}
+        "Signup"]]])))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -86,6 +103,7 @@
                  (.-version)))
 
 (defn init []
+  (-> firebase (.initializeApp firebase-config))
   (dispatch-sync [:initialize-db])
   (dispatch-sync [:set-version version])
   (start))
