@@ -3,7 +3,7 @@
     "name": "workout-logger",
     "slug": "workout-logger",
     "privacy": "public",
-    "entryPoint": "./app/index.js",
+    "entryPoint": "./app-compiled/index.js",
     "sdkVersion": "37.0.0",
     "platforms": [
       "ios",
