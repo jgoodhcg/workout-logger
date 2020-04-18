@@ -1,5 +1,7 @@
 (ns app.handlers
   (:require
+   ["firebase" :as firebase]
+   ["firebase/auth"]
    [re-frame.core :refer [reg-event-db ->interceptor reg-event-fx reg-fx dispatch]]
    [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
    [clojure.spec.alpha :as s]
@@ -40,6 +42,17 @@
   (->> db
        (setval [:version] version)))
 
+(reg-fx :firebase-signup
+        (fn [{:keys [email password]}]
+          (-> firebase
+              (.auth)
+              (.createUserWithEmailAndPassword email password))))
+
+(defn signup [cofx [_ email-pass-map]]
+  {:db              (:db cofx)
+   :firebase-signup email-pass-map})
+
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
 (reg-event-db :set-version [spec-validation] set-version)
+(reg-event-fx :signup [] signup)

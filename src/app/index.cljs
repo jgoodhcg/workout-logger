@@ -30,6 +30,7 @@
                       :storageBucket     "workout-logger-c7ccd.appspot.com"
                       :messagingSenderId "560616186938"
                       :appId             "1:560616186938:web:57ff1a8dcc70d738fd0103"})
+
 (def styles
   ^js (-> {:surface
            {:flex            1
@@ -63,20 +64,22 @@
         {:label "email"
          :style (.-input styles)}]
        [:> paper/TextInput
-        {:label "password"
+        {:label             "password"
          :secure-text-entry true
-         :style (.-input styles)}]
+         :style             (.-input styles)}]
        [:> paper/Button
-        {:icon "account"
-         :mode "contained"
+        {:icon  "account"
+         :mode  "contained"
          :style (.-buttonLogin styles)}
         "Login"]
 
        ;; signup
        [:> paper/Button
-        {:icon "account-plus"
-         :mode "outlined"
-         :style (.-button styles)}
+        {:icon     "account-plus"
+         :mode     "outlined"
+         :style    (.-button styles)
+         :on-press #(>evt [:signup {:email    "test2@test.com"
+                                    :password "test-password"}])}
         "Signup"]]])))
 
 (defn root []
@@ -103,7 +106,8 @@
                  (.-version)))
 
 (defn init []
-  (-> firebase (.initializeApp firebase-config))
+  ;; TODO move this to side effect
+  (-> firebase (.initializeApp (clj->js firebase-config)))
   (dispatch-sync [:initialize-db])
   (dispatch-sync [:set-version version])
   (start))
