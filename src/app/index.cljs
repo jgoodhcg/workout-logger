@@ -12,6 +12,7 @@
     [reagent.core :as r]
     [re-frame.core :refer [subscribe dispatch dispatch-sync]]
     [shadow.expo :as expo]
+    [app.fx]
     [app.handlers]
     [app.subscriptions]
     [app.secrets :as secrets]
