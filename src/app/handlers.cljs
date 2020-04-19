@@ -7,6 +7,19 @@
    [clojure.spec.alpha :as s]
    [app.db :as db :refer [default-app-db app-db-spec]]))
 
+(reg-fx :firebase-signup
+        (fn [{:keys [email password]}]
+          (-> firebase
+              (.auth)
+              (.createUserWithEmailAndPassword email password)
+              (.catch (clj->js (fn [error]
+                                 ;; TODO dispatch an alert event for the user
+                                 (println error)))))))
+
+(reg-fx :firebase-init
+        (fn [config]
+          (-> firebase (.initializeApp (clj->js config)))))
+
 (defn check-and-throw
   "Throw an exception if db doesn't have a valid spec."
   [spec db event]
@@ -42,21 +55,13 @@
   (->> db
        (setval [:version] version)))
 
-(reg-fx :firebase-signup
-        (fn [{:keys [email password]}]
-          (-> firebase
-              (.auth)
-              (.createUserWithEmailAndPassword email password))))
-
 (defn signup [cofx [_ email-pass-map]]
-  (merge cofx {:firebase-signup email-pass-map}))
-
-(reg-fx :firebase-init
-        (fn [config]
-          (-> firebase (.initializeApp (clj->js config)))))
+  {:db (:db cofx)
+   :firebase-signup email-pass-map})
 
 (defn initialize-firebase [cofx [_ config]]
-  (merge cofx {:firebase-init config-js}))
+  {:db (:db cofx)
+   :firebase-init config})
 
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)

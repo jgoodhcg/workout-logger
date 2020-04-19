@@ -36,6 +36,9 @@
            {:flex            1
             :justify-content "flex-end"}
 
+           :title
+           {:align-self "center"}
+
            :button
            {:margin 8}
 
@@ -59,6 +62,9 @@
      [:> paper/Surface {:style (.-surface styles)}
       [:> rn/View
 
+       [:> paper/Title {:style (.-title styles)}
+        "Workout Logger"]
+
        ;; login
        [:> paper/TextInput
         {:label "email"
@@ -78,7 +84,7 @@
         {:icon     "account-plus"
          :mode     "outlined"
          :style    (.-button styles)
-         :on-press #(>evt [:signup {:email    "test2@test.com"
+         :on-press #(>evt [:signup {:email    ""
                                     :password "test-password"}])}
         "Signup"]]])))
 
