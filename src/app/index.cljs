@@ -55,7 +55,7 @@
           (clj->js)
           (rn/StyleSheet.create)))
 
-(defn home-scene [props]
+(defn login-screen [props]
   (r/as-element
    (let [version         (<sub [:version])
          theme-selection (<sub [:theme])
@@ -75,10 +75,9 @@
          :secure-text-entry true
          :style             (.-input styles)}]
        [:> paper/Button
-        {:icon     "account"
-         :mode     "contained"
-         :style    (.-buttonLogin styles)
-         :on-press #(-> nav/Actions (.push "test-tab-one"))}
+        {:icon  "account"
+         :mode  "contained"
+         :style (.-buttonLogin styles)}
         "Login"]
 
        ;; signup
@@ -86,15 +85,17 @@
         {:icon     "account-plus"
          :mode     "outlined"
          :style    (.-button styles)
-         :on-press #(>evt [:signup {:email    "testFXIsolation@gmail.com"
-                                    :password "test-password"}])}
+         :on-press #(-> nav/Actions (.signup))}
         "Signup"]]])))
 
-(defn stub-page [props]
+(defn stub-screen [props]
   (r/as-element
    [:> paper/Surface {:style (.-surface styles)}
     [:> rn/View
-     [:> paper/Title (:title (js->clj props :keywordize-keys true))]]]))
+     [:> paper/Title (:title (js->clj props :keywordize-keys true))]
+     [:> paper/Button {:on-press #(-> nav/Actions (.signup))} "Signup"]
+     [:> paper/Button {:on-press #(-> nav/Actions (.login))} "Login"]
+     [:> paper/Button {:on-press #(-> nav/Actions (.capture))} "Capture"]]]))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -104,20 +105,31 @@
                                  paper/DarkTheme)}
      [:> nav/Router
       [:> nav/Stack {:key "root"}
-       ;; [:> nav/Scene {:key          "home"
-       ;;                :title        "Home"
-       ;;                :hide-nav-bar true
-       ;;                :component    (paper/withTheme home-scene)}]
-       [:> nav/Tabs {:key "tabar"
+
+       ;; auth
+       [:> nav/Scene {:key          "login"
+                      :hide-nav-bar true
+                      :component    (paper/withTheme login-screen)}]
+       [:> nav/Scene {:key          "signup"
+                      :hide-nav-bar true
+                      :component    (paper/withTheme stub-screen) :title "Signup"}]
+
+       ;; app
+       [:> nav/Tabs {:key          "tabar"
+                     :initial      true
                      :hide-nav-bar true}
-        [:> nav/Scene {:key          "test-tab-one"
-                       :component    (paper/withTheme stub-page)
+        [:> nav/Scene {:key          "capture"
                        :hide-nav-bar true
-                       :title        "Tab One"}]
-        [:> nav/Scene {:key          "test-tab-two"
-                       :component    (paper/withTheme stub-page)
+                       :component    (paper/withTheme stub-screen) :title "Capture"}]
+        [:> nav/Scene {:key          "list"
                        :hide-nav-bar true
-                       :title        "Tab Two"}]]]
+                       :component    (paper/withTheme stub-screen) :title "List"}]
+        [:> nav/Scene {:key          "data"
+                       :hide-nav-bar true
+                       :component    (paper/withTheme stub-screen) :title "data"}]
+        [:> nav/Scene {:key          "profile"
+                       :hide-nav-bar true
+                       :component    (paper/withTheme stub-screen) :title "profile"}]]]
 
       ]]))
 
