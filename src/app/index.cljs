@@ -35,7 +35,7 @@
 (def styles
   ^js (-> {:surface
            {:flex            1
-            :justify-content "flex-end"}
+            :justify-content "center"}
 
            :title
            {:align-self "center"}
@@ -75,9 +75,10 @@
          :secure-text-entry true
          :style             (.-input styles)}]
        [:> paper/Button
-        {:icon  "account"
-         :mode  "contained"
-         :style (.-buttonLogin styles)}
+        {:icon     "account"
+         :mode     "contained"
+         :style    (.-buttonLogin styles)
+         :on-press #(-> nav/Actions (.push "test-tab-one"))}
         "Login"]
 
        ;; signup
@@ -85,9 +86,15 @@
         {:icon     "account-plus"
          :mode     "outlined"
          :style    (.-button styles)
-         :on-press #(>evt [:signup {:email    ""
+         :on-press #(>evt [:signup {:email    "testFXIsolation@gmail.com"
                                     :password "test-password"}])}
         "Signup"]]])))
+
+(defn stub-page [props]
+  (r/as-element
+   [:> paper/Surface {:style (.-surface styles)}
+    [:> rn/View
+     [:> paper/Title (:title (js->clj props :keywordize-keys true))]]]))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -97,10 +104,22 @@
                                  paper/DarkTheme)}
      [:> nav/Router
       [:> nav/Stack {:key "root"}
-       [:> nav/Scene {:key          "home"
-                      :title        "Home"
-                      :hide-nav-bar true
-                      :component    (paper/withTheme home-scene)}]]]]))
+       ;; [:> nav/Scene {:key          "home"
+       ;;                :title        "Home"
+       ;;                :hide-nav-bar true
+       ;;                :component    (paper/withTheme home-scene)}]
+       [:> nav/Tabs {:key "tabar"
+                     :hide-nav-bar true}
+        [:> nav/Scene {:key          "test-tab-one"
+                       :component    (paper/withTheme stub-page)
+                       :hide-nav-bar true
+                       :title        "Tab One"}]
+        [:> nav/Scene {:key          "test-tab-two"
+                       :component    (paper/withTheme stub-page)
+                       :hide-nav-bar true
+                       :title        "Tab Two"}]]]
+
+      ]]))
 
 (defn start
   {:dev/after-load true}
