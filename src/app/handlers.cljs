@@ -48,8 +48,13 @@
   {:db (:db cofx)
    :firebase-init config})
 
+(defn navigate [cofx [_ screen]]
+  {:db       (-> cofx :db)
+   :navigate screen})
+
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
 (reg-event-db :set-version [spec-validation] set-version)
-(reg-event-fx :signup [] signup)
-(reg-event-fx :initialize-firebase [] initialize-firebase)
+(reg-event-fx :signup [spec-validation] signup)
+(reg-event-fx :initialize-firebase [spec-validation] initialize-firebase)
+(reg-event-fx :navigate [spec-validation] navigate)

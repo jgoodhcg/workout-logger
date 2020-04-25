@@ -93,9 +93,9 @@
    [:> paper/Surface {:style (.-surface styles)}
     [:> rn/View
      [:> paper/Title (:title (js->clj props :keywordize-keys true))]
-     [:> paper/Button {:on-press #(-> nav/Actions (.signup))} "Signup"]
-     [:> paper/Button {:on-press #(-> nav/Actions (.login))} "Login"]
-     [:> paper/Button {:on-press #(-> nav/Actions (.capture))} "Capture"]]]))
+     [:> paper/Button {:on-press #(>evt [:navigate :signup])} "Signup"]
+     [:> paper/Button {:on-press #(>evt [:navigate :login])} "Login"]
+     [:> paper/Button {:on-press #(>evt [:navigate :capture])} "Capture"]]]))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -115,9 +115,19 @@
                       :component    (paper/withTheme stub-screen) :title "Signup"}]
 
        ;; app
-       [:> nav/Tabs {:key          "tabar"
-                     :initial      true
-                     :hide-nav-bar true}
+       ;; TODO use custom component https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
+       [:> nav/Tabs {:key              "tabar"
+                     :initial          true
+                     ;; tab bar press override
+                     ;; is only to push all navigation actions through re-frame fx
+                     ;; might be useful for analytics
+                     :tab-bar-on-press #(>evt [:navigate (-> %
+                                                             (js->clj :keywordize-keys true)
+                                                             (:navigation)
+                                                             (:state)
+                                                             (:key)
+                                                             (keyword))])
+                     :hide-nav-bar     true}
         [:> nav/Scene {:key          "capture"
                        :hide-nav-bar true
                        :component    (paper/withTheme stub-screen) :title "Capture"}]

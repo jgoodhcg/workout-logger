@@ -2,6 +2,8 @@
   (:require
    ["firebase" :as firebase]
    ["firebase/auth"]
+   ["react-native-router-flux" :as nav]
+   [applied-science.js-interop :as j]
    [re-frame.core :refer [reg-fx dispatch]]
    [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
    [clojure.spec.alpha :as s]))
@@ -19,4 +21,7 @@
         (fn [config]
           (-> firebase (.initializeApp (clj->js config)))))
 
+(reg-fx :navigate
+        (fn [screen]
+          (j/call nav/Actions screen)))
 
