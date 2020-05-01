@@ -55,11 +55,18 @@
           (clj->js)
           (rn/StyleSheet.create)))
 
+(def login-form (r/atom {:email    ""
+                         :password ""}))
+
 (defn login-screen [props]
   (r/as-element
+
    (let [version         (<sub [:version])
          theme-selection (<sub [:theme])
-         theme           (.-theme props)]
+         theme           (.-theme props)
+         email           (:email @login-form)
+         password        (:password @login-form)]
+
      [:> paper/Surface {:style (.-surface styles)}
       [:> rn/View
 
@@ -68,16 +75,23 @@
 
        ;; login
        [:> paper/TextInput
-        {:label "email"
-         :style (.-input styles)}]
+        {:label          "email"
+         :style          (.-input styles)
+         :default-value  email
+         :on-change-text (fn [text]
+                           (swap! login-form #(assoc % :email text)))}]
        [:> paper/TextInput
         {:label             "password"
          :secure-text-entry true
-         :style             (.-input styles)}]
+         :style             (.-input styles)
+         :default-value     password
+         :on-change-text    (fn [text]
+                              (swap! login-form #(assoc % :password text)))}]
        [:> paper/Button
-        {:icon  "account"
-         :mode  "contained"
-         :style (.-buttonLogin styles)}
+        {:icon     "account"
+         :mode     "contained"
+         :style    (.-buttonLogin styles)
+         :on-press #(>evt [:login @login-form])}
         "Login"]
 
        ;; signup
@@ -116,7 +130,7 @@
 
        ;; app
        ;; TODO use custom component https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
-       [:> nav/Tabs {:key              "tabar"
+       [:> nav/Tabs {:key              "tabbar"
                      :initial          true
                      ;; tab bar press override
                      ;; is only to push all navigation actions through re-frame fx
@@ -155,8 +169,8 @@
 
 (defn init []
   ;; TODO move this to side effect
-  (dispatch-sync [:initialize-firebase firebase-config])
   (dispatch-sync [:initialize-db])
+  (dispatch-sync [:initialize-firebase firebase-config])
   (dispatch-sync [:set-version version])
   (start))
 

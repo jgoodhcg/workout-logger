@@ -19,8 +19,10 @@
         event (-> context :coeffects :event)]
 
     (if (some? (check-and-throw app-db-spec db event))
-      (assoc-in context [:effects :db] old-db) ;; put the old db back as the new db when check fails
-      context)))                               ;; otherwise return context unchanged
+      (assoc-in context [:effects :db] old-db)
+      ;; put the old db back as the new db when check fails
+      ;; otherwise return context unchanged
+      context)))
 
 (def spec-validation
   (if goog.DEBUG
@@ -49,8 +51,16 @@
    :firebase-init config})
 
 (defn navigate [cofx [_ screen]]
-  {:db       (-> cofx :db)
+  {:db       (:db cofx)
    :navigate screen})
+
+(defn login [cofx [_ email-pass]]
+  {:db    (:db cofx)
+   :login email-pass})
+
+(defn login-success [cofx [_ user]]
+  {:db       (assoc (:db cofx) :user user)
+   :navigate :capture})
 
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
@@ -58,3 +68,5 @@
 (reg-event-fx :signup [spec-validation] signup)
 (reg-event-fx :initialize-firebase [spec-validation] initialize-firebase)
 (reg-event-fx :navigate [spec-validation] navigate)
+(reg-event-fx :login [spec-validation] login)
+(reg-event-fx :login-success [spec-validation] login-success)
