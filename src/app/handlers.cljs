@@ -60,6 +60,8 @@
    :firebase-login email-pass})
 
 (defn login-success [cofx [_ user]]
+  (println "login-success")
+  (println user)
   {:db       (assoc (:db cofx) :user user)
    :navigate :capture})
 

@@ -3,6 +3,7 @@
    ["firebase" :as firebase]
    ["firebase/auth"]
    ["react-native-router-flux" :as nav]
+   ["expo-secure-store" :as secure-store]
    [applied-science.js-interop :as j]
    [re-frame.core :refer [reg-fx dispatch]]
    [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
@@ -34,45 +35,52 @@
         (fn [screen]
           (j/call nav/Actions screen)))
 
+(defn sign-in-callback [user-cred]
+  (-> user-cred
+      (js->clj :keywordize-keys true)
+      (:user) ;; :credential here is always nil ???
+      ;; propbably because it is just email/pass
+      (j/call :toJSON)
+      (js->clj :keywordize-keys true)
+      (#(>evt [:login-success %])))
+
+  ;; put email/pass in secure store to log in again
+  ;; this isn't great but setPersistence()
+  ;; doesn't seem to work ):
+  (j/call secure-store :setItemAsync
+          "credential"
+          (-> firebase
+              (j/get :auth)
+              (j/get :EmailAuthProvider)
+              (j/call :credential email password)
+              (j/call :toJSON)
+              (->> (j/call js/JSON :stringify)))))
+
 (reg-fx :firebase-login
         (fn [{:keys [email password]}]
           (-> firebase
-              (.auth)
-              (.signInWithEmailAndPassword email password)
-              ;; TODO .then with a dispatch to add user credentials to app-db
-              ;; https://firebase.google.com/docs/reference/js/firebase.auth#usercredential
-              (.then (clj->js (fn [user-cred]
-                                (let [local-persistence (-> firebase
-                                                            (j/get :auth)
-                                                            (j/get :Auth)
-                                                            (j/get :Persistence)
-                                                            (j/get :LOCAL))]
-                                  (-> firebase
-                                      (j/call :auth) ;; same as (-> firebase (.auth))
-                                      (j/call :setPersistence local-persistence)
-                                      (j/call :then (clj->js (fn []
-                                                               (println "Do I have to get a credential?")
-                                                               (println
-                                                                (-> firebase
-                                                                    (j/get :auth)
-                                                                    (j/get :EmailAuthProvider)
-                                                                    (j/call :credential)))
-                                                               )))))
-                                (-> user-cred
-                                    (js->clj :keywordize-keys true)
-                                    (:user)
-                                    (.toJSON)
-                                    (js->clj :keywordize-keys true)
-                                    (#(>evt [:login-success %]))))))
+              (j/call :auth)
+              (j/call :signInWithEmailAndPassword email password)
+              (j/call :then (clj->js sign-in-callback))
+
               (.catch (clj->js (fn [error]
                                  ;; TODO dispatch an alert event for the user
                                  (println error)))))))
 
 (reg-fx :firebase-load-user
         (fn []
-          (println "disablecd firebase-load-user")
-          ;; (-> firebase
-          ;;     (j/call :auth)
-          ;;     (j/get :currentUser)
-          ;;     (#(println %)))
-          ))
+          (-> secure-store
+              (j/call :getItemAsync "credential")
+              (j/call
+               :then
+               (clj->js (fn [credential]
+                          (println "pulled out credential from secure store")
+                          (println credential)
+                          (-> firebase
+                              (j/call :auth)
+                              (j/call :signInWithCredential
+                                      (-> firebase
+                                          (j/get :auth)
+                                          (j/get :AuthCredential)
+                                          (j/call :fromJSON credential)))
+                              (j/call :then (clj->js sign-in-callback)))))))))
