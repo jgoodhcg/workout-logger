@@ -11,9 +11,17 @@
 
 (reg-fx :firebase-signup
         (fn [{:keys [email password]}]
+          (println "firebase-signup")
           (-> firebase
               (.auth)
               (.createUserWithEmailAndPassword email password)
+              (.then (clj->js (fn [user-cred]
+                                (-> user-cred
+                                    (js->clj :keywordize-keys true)
+                                    (:user)
+                                    (.toJSON)
+                                    (js->clj :keywordize-keys true)
+                                    (#(>evt [:signup-success %]))))))
               (.catch (clj->js (fn [error]
                                  ;; TODO dispatch an alert event for the user
                                  (println error)))))))

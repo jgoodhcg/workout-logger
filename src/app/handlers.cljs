@@ -14,9 +14,9 @@
       true)))
 
 (defn validate-spec [context]
-  (let [db (-> context :effects :db)
+  (let [db     (-> context :effects :db)
         old-db (-> context :coeffects :db)
-        event (-> context :coeffects :event)]
+        event  (-> context :coeffects :event)]
 
     (if (some? (check-and-throw app-db-spec db event))
       (assoc-in context [:effects :db] old-db)
@@ -43,11 +43,12 @@
        (setval [:version] version)))
 
 (defn signup [cofx [_ email-pass-map]]
-  {:db (:db cofx)
+  (println "signup handler")
+  {:db              (:db cofx)
    :firebase-signup email-pass-map})
 
 (defn initialize-firebase [cofx [_ config]]
-  {:db (:db cofx)
+  {:db            (:db cofx)
    :firebase-init config})
 
 (defn navigate [cofx [_ screen]]
@@ -59,8 +60,16 @@
    :login email-pass})
 
 (defn login-success [cofx [_ user]]
+  (println "login user")
+  (println user)
   {:db       (assoc (:db cofx) :user user)
    :navigate :capture})
+
+(defn signup-success [cofx [_ user]]
+  (println "signup user")
+  (println user)
+  {:db       (:db cofx)
+   :navigate :login})
 
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
@@ -70,3 +79,4 @@
 (reg-event-fx :navigate [spec-validation] navigate)
 (reg-event-fx :login [spec-validation] login)
 (reg-event-fx :login-success [spec-validation] login-success)
+(reg-event-fx :signup-success [spec-validation] signup-success)

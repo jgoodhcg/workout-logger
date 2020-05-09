@@ -99,8 +99,55 @@
         {:icon     "account-plus"
          :mode     "outlined"
          :style    (.-button styles)
-         :on-press #(-> nav/Actions (.signup))}
+         :on-press #(>evt [:navigate :signup])}
         "Signup"]]])))
+
+(def signup-form (r/atom {:email    ""
+                          :password ""}))
+
+(defn signup-screen [props]
+  (r/as-element
+
+   (let [version         (<sub [:version])
+         theme-selection (<sub [:theme])
+         theme           (.-theme props)
+         email           (:email @signup-form)
+         password        (:password @signup-form)
+         repeat-password (:repeat-password @signup-form)]
+
+     [:> paper/Surface {:style (.-surface styles)}
+      [:> rn/View
+
+       [:> paper/Title {:style (.-title styles)}
+        "Workout Logger"]
+
+       [:> paper/TextInput
+        {:label          "email"
+         :style          (.-input styles)
+         :default-value  email
+         :on-change-text (fn [text]
+                           (swap! signup-form #(assoc % :email text)))}]
+       [:> paper/TextInput
+        {:label             "password"
+         :secure-text-entry true
+         :style             (.-input styles)
+         :default-value     password
+         :on-change-text    (fn [text]
+                              (swap! signup-form #(assoc % :password text)))}]
+
+       [:> paper/Button
+        {:icon     "account-plus"
+         :mode     "contained"
+         :style    (.-buttonLogin styles)
+         :on-press #(>evt [:signup @signup-form])}
+        "Signup"]
+
+       [:> paper/Button
+        {:icon     "account"
+         :mode     "outlined"
+         :style    (.-button styles)
+         :on-press #(>evt [:navigate :login])}
+        "Login"]]])))
 
 (defn stub-screen [props]
   (r/as-element
@@ -126,7 +173,7 @@
                       :component    (paper/withTheme login-screen)}]
        [:> nav/Scene {:key          "signup"
                       :hide-nav-bar true
-                      :component    (paper/withTheme stub-screen) :title "Signup"}]
+                      :component    (paper/withTheme signup-screen)}]
 
        ;; app
        ;; TODO use custom component https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
