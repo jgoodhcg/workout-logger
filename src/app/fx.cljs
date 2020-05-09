@@ -34,7 +34,7 @@
         (fn [screen]
           (j/call nav/Actions screen)))
 
-(reg-fx :login
+(reg-fx :firebase-login
         (fn [{:keys [email password]}]
           (-> firebase
               (.auth)
@@ -42,6 +42,22 @@
               ;; TODO .then with a dispatch to add user credentials to app-db
               ;; https://firebase.google.com/docs/reference/js/firebase.auth#usercredential
               (.then (clj->js (fn [user-cred]
+                                (let [local-persistence (-> firebase
+                                                            (j/get :auth)
+                                                            (j/get :Auth)
+                                                            (j/get :Persistence)
+                                                            (j/get :LOCAL))]
+                                  (-> firebase
+                                      (j/call :auth) ;; same as (-> firebase (.auth))
+                                      (j/call :setPersistence local-persistence)
+                                      (j/call :then (clj->js (fn []
+                                                               (println "Do I have to get a credential?")
+                                                               (println
+                                                                (-> firebase
+                                                                    (j/get :auth)
+                                                                    (j/get :EmailAuthProvider)
+                                                                    (j/call :credential)))
+                                                               )))))
                                 (-> user-cred
                                     (js->clj :keywordize-keys true)
                                     (:user)
@@ -51,3 +67,12 @@
               (.catch (clj->js (fn [error]
                                  ;; TODO dispatch an alert event for the user
                                  (println error)))))))
+
+(reg-fx :firebase-load-user
+        (fn []
+          (println "disablecd firebase-load-user")
+          ;; (-> firebase
+          ;;     (j/call :auth)
+          ;;     (j/get :currentUser)
+          ;;     (#(println %)))
+          ))

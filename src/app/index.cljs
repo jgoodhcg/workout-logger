@@ -219,5 +219,6 @@
   (dispatch-sync [:initialize-db])
   (dispatch-sync [:initialize-firebase firebase-config])
   (dispatch-sync [:set-version version])
+  (dispatch-sync [:load-user])
   (start))
 
