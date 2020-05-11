@@ -60,8 +60,6 @@
    :firebase-login email-pass})
 
 (defn login-success [cofx [_ user]]
-  (println "login-success")
-  (println user)
   {:db       (assoc (:db cofx) :user user)
    :navigate :capture})
 
@@ -73,6 +71,10 @@
   {:db                 (:db cofx)
    :firebase-load-user true})
 
+(defn load-user-success [cofx [_ user]]
+  {:db       (assoc (:db cofx) :user user)
+   :navigate :capture})
+
 (reg-event-db :initialize-db [spec-validation] initialize-db)
 (reg-event-db :set-theme [spec-validation] set-theme)
 (reg-event-db :set-version [spec-validation] set-version)
@@ -83,3 +85,4 @@
 (reg-event-fx :login-success [spec-validation] login-success)
 (reg-event-fx :signup-success [spec-validation] signup-success)
 (reg-event-fx :load-user [spec-validation] load-user)
+(reg-event-fx :load-user-success [spec-validation] load-user-success)

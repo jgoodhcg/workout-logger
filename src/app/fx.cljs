@@ -10,22 +10,35 @@
    [clojure.spec.alpha :as s]
    [app.helpers :refer [>evt]]))
 
+(defn auth-persist [on-success on-error]
+  (-> firebase
+      (j/call :auth)
+      (j/call :setPersistence (-> firebase
+                                  (j/get :auth)
+                                  (j/get :Auth)
+                                  (j/get :Persistence)
+                                  (j/get :LOCAL)))
+      (j/call :then (clj->js on-success))
+      (j/call :catch (clj->js on-error))))
+
 (reg-fx :firebase-signup
         (fn [{:keys [email password]}]
-          (println "firebase-signup")
-          (-> firebase
-              (.auth)
-              (.createUserWithEmailAndPassword email password)
-              (.then (clj->js (fn [user-cred]
-                                (-> user-cred
-                                    (js->clj :keywordize-keys true)
-                                    (:user)
-                                    (.toJSON)
-                                    (js->clj :keywordize-keys true)
-                                    (#(>evt [:signup-success %]))))))
-              (.catch (clj->js (fn [error]
-                                 ;; TODO dispatch an alert event for the user
-                                 (println error)))))))
+          (auth-persist
+           (fn [_]
+             (-> firebase
+                 (.auth)
+                 (.createUserWithEmailAndPassword email password)
+                 (.then (clj->js (fn [user-cred]
+                                   (-> user-cred
+                                       (js->clj :keywordize-keys true)
+                                       (:user)
+                                       (.toJSON)
+                                       (js->clj :keywordize-keys true)
+                                       (#(>evt [:signup-success %]))))))
+                 (.catch (clj->js (fn [error]
+                                    ;; TODO dispatch an alert event for the user
+                                    (println error))))))
+           #(println %))))
 
 (reg-fx :firebase-init
         (fn [config]
@@ -42,45 +55,27 @@
       ;; propbably because it is just email/pass
       (j/call :toJSON)
       (js->clj :keywordize-keys true)
-      (#(>evt [:login-success %])))
-
-  ;; put email/pass in secure store to log in again
-  ;; this isn't great but setPersistence()
-  ;; doesn't seem to work ):
-  (j/call secure-store :setItemAsync
-          "credential"
-          (-> firebase
-              (j/get :auth)
-              (j/get :EmailAuthProvider)
-              (j/call :credential email password)
-              (j/call :toJSON)
-              (->> (j/call js/JSON :stringify)))))
+      (#(>evt [:login-success %]))))
 
 (reg-fx :firebase-login
         (fn [{:keys [email password]}]
-          (-> firebase
-              (j/call :auth)
-              (j/call :signInWithEmailAndPassword email password)
-              (j/call :then (clj->js sign-in-callback))
-
-              (.catch (clj->js (fn [error]
-                                 ;; TODO dispatch an alert event for the user
-                                 (println error)))))))
+          (auth-persist
+           #(-> firebase
+                (j/call :auth)
+                (j/call :signInWithEmailAndPassword email password)
+                (j/call :then (clj->js sign-in-callback))
+                (.catch (clj->js (fn [error]
+                                   ;; TODO dispatch an alert event for the user
+                                   (println error)))))
+           #(println %))))
 
 (reg-fx :firebase-load-user
         (fn []
-          (-> secure-store
-              (j/call :getItemAsync "credential")
-              (j/call
-               :then
-               (clj->js (fn [credential]
-                          (println "pulled out credential from secure store")
-                          (println credential)
-                          (-> firebase
-                              (j/call :auth)
-                              (j/call :signInWithCredential
-                                      (-> firebase
-                                          (j/get :auth)
-                                          (j/get :AuthCredential)
-                                          (j/call :fromJSON credential)))
-                              (j/call :then (clj->js sign-in-callback)))))))))
+          (-> firebase
+              (j/call :auth)
+              (j/call :onAuthStateChanged
+                      (fn [user]
+                        (>evt [:load-user-success
+                               (-> user
+                                   (j/call :toJSON)
+                                   (js->clj :keywordize-keys true))]))))))

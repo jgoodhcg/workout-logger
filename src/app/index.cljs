@@ -167,6 +167,10 @@
      [:> nav/Router
       [:> nav/Stack {:key "root"}
 
+       [:> nav/Scene {:key "loading"
+                      :initial true
+                      :hide-nav-bar true
+                      :component (paper/withTheme stub-screen) :title "loading"}]
        ;; auth
        [:> nav/Scene {:key          "login"
                       :hide-nav-bar true
@@ -178,7 +182,6 @@
        ;; app
        ;; TODO use custom component https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
        [:> nav/Tabs {:key              "tabbar"
-                     :initial          true
                      ;; tab bar press override
                      ;; is only to push all navigation actions through re-frame fx
                      ;; might be useful for analytics
