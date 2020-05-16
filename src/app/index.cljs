@@ -151,12 +151,11 @@
 
 (defn stub-screen [props]
   (r/as-element
-   [:> paper/Surface {:style (.-surface styles)}
-    [:> rn/View
-     [:> paper/Title (:title (js->clj props :keywordize-keys true))]
-     [:> paper/Button {:on-press #(>evt [:navigate :signup])} "Signup"]
-     [:> paper/Button {:on-press #(>evt [:navigate :login])} "Login"]
-     [:> paper/Button {:on-press #(>evt [:navigate :capture])} "Capture"]]]))
+   (let [email [<sub [:email]]]
+     [:> paper/Surface {:style (.-surface styles)}
+      [:> rn/View
+       [:> paper/Text email]
+       [:> paper/Title (:title (js->clj props :keywordize-keys true))]]])))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -180,7 +179,8 @@
                       :component    (paper/withTheme signup-screen)}]
 
        ;; app
-       ;; TODO use custom component https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
+       ;; TODO use custom component
+       ;; https://github.com/aksonov/react-native-router-flux/blob/master/docs/API.md#custom-tab-bar-component
        [:> nav/Tabs {:key              "tabbar"
                      ;; tab bar press override
                      ;; is only to push all navigation actions through re-frame fx
