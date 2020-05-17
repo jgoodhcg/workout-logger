@@ -70,12 +70,22 @@
            #(println %))))
 
 (reg-fx :firebase-load-user
-        (fn []
+        (fn [_]
           (-> firebase
               (j/call :auth)
               (j/call :onAuthStateChanged
-                      (fn [user]
-                        (>evt [:load-user-success
-                               (-> user
-                                   (j/call :toJSON)
-                                   (js->clj :keywordize-keys true))]))))))
+                      (fn [u]
+                        (println "auth state changed")
+                        (println u)
+                        (if-some [user u]
+                          (>evt [:load-user-success
+                                 (-> user
+                                     (j/call :toJSON)
+                                     (js->clj :keywordize-keys true))])
+                          (>evt [:navigate :login])))))))
+
+(reg-fx :firebase-logout
+        (fn [_]
+          (-> firebase
+              (j/call :auth)
+              (j/call :signOut))))

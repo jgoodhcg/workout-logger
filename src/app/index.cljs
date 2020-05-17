@@ -152,11 +152,15 @@
 
 (defn stub-screen [props]
   (r/as-element
-   (let [email [<sub [:email]]]
+   (let [email [<sub [:email]]
+         title (:title (js->clj props :keywordize-keys true))]
      [:> paper/Surface {:style (.-surface styles)}
       [:> rn/View
        [:> paper/Text email]
-       [:> paper/Title (:title (js->clj props :keywordize-keys true))]]])))
+       [:> paper/Title title]
+       [:> paper/Button {:icon "logout"
+                         :on-press #(>evt [:logout])}
+        "Signout"]]])))
 
 (defn root []
   (let [theme (<sub [:theme])]
@@ -211,6 +215,7 @@
 (defn start
   {:dev/after-load true}
   []
+  (dispatch-sync [:load-user])
   (expo/render-root (r/as-element [root])))
 
 (def version (-> expo-constants

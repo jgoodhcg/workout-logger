@@ -1,7 +1,16 @@
 (ns app.handlers
   (:require
-   [re-frame.core :refer [reg-event-db ->interceptor reg-event-fx reg-fx dispatch]]
-   [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
+   [re-frame.core :refer [reg-event-db
+                          ->interceptor
+                          reg-event-fx
+                          reg-fx
+                          dispatch
+                          debug]]
+   [com.rpl.specter :as sp :refer [select
+                                   select-one
+                                   setval
+                                   transform
+                                   selected-any?]]
    [clojure.spec.alpha :as s]
    [app.db :as db :refer [default-app-db app-db-spec]]))
 
@@ -18,6 +27,7 @@
         old-db (-> context :coeffects :db)
         event  (-> context :coeffects :event)]
 
+    (println event)
     (if (some? (check-and-throw app-db-spec db event))
       (assoc-in context [:effects :db] old-db)
       ;; put the old db back as the new db when check fails
@@ -30,6 +40,9 @@
         :id :spec-validation
         :after validate-spec)
     ->interceptor))
+
+(def standard-interceptors  [;; (when ^boolean goog.DEBUG debug)
+                             spec-validation])
 
 (defn initialize-db [_ _]
   default-app-db)
@@ -52,7 +65,7 @@
    :firebase-init config})
 
 (defn navigate [cofx [_ screen]]
-  {:db       (:db cofx)
+  {:db       (assoc (:db cofx) :last-screen screen)
    :navigate screen})
 
 (defn login [cofx [_ email-pass]]
@@ -61,7 +74,9 @@
 
 (defn login-success [cofx [_ user]]
   {:db       (assoc (:db cofx) :user user)
-   :navigate :capture})
+   :navigate (if-some [last-screen (-> cofx :db :last-screen)]
+               last-screen
+               :capture)})
 
 (defn signup-success [cofx [_ user]]
   {:db       (:db cofx)
@@ -73,16 +88,25 @@
 
 (defn load-user-success [cofx [_ user]]
   {:db       (assoc (:db cofx) :user user)
-   :navigate :capture})
+   :navigate (if-some [last-screen (-> cofx :db :last-screen)]
+               (if (= last-screen :login)
+                 :capture
+                 last-screen)
+               :capture)})
 
-(reg-event-db :initialize-db [spec-validation] initialize-db)
-(reg-event-db :set-theme [spec-validation] set-theme)
-(reg-event-db :set-version [spec-validation] set-version)
-(reg-event-fx :signup [spec-validation] signup)
-(reg-event-fx :initialize-firebase [spec-validation] initialize-firebase)
-(reg-event-fx :navigate [spec-validation] navigate)
-(reg-event-fx :login [spec-validation] login)
-(reg-event-fx :login-success [spec-validation] login-success)
-(reg-event-fx :signup-success [spec-validation] signup-success)
-(reg-event-fx :load-user [spec-validation] load-user)
-(reg-event-fx :load-user-success [spec-validation] load-user-success)
+(defn logout [cofx [_ _]]
+  {:db              (dissoc (:db cofx) :user)
+   :firebase-logout true})
+
+(reg-event-db :initialize-db [standard-interceptors] initialize-db)
+(reg-event-db :set-theme [standard-interceptors] set-theme)
+(reg-event-db :set-version [standard-interceptors] set-version)
+(reg-event-fx :signup [standard-interceptors] signup)
+(reg-event-fx :initialize-firebase [standard-interceptors] initialize-firebase)
+(reg-event-fx :navigate [standard-interceptors] navigate)
+(reg-event-fx :login [standard-interceptors] login)
+(reg-event-fx :login-success [standard-interceptors] login-success)
+(reg-event-fx :signup-success [standard-interceptors] signup-success)
+(reg-event-fx :load-user [standard-interceptors] load-user)
+(reg-event-fx :load-user-success [standard-interceptors] load-user-success)
+(reg-event-fx :logout [standard-interceptors] logout)
