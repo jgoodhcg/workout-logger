@@ -4,6 +4,7 @@
    ["firebase/auth"]
    ["react-native-router-flux" :as nav]
    ["expo-secure-store" :as secure-store]
+   ["react-native" :as rn]
    [applied-science.js-interop :as j]
    [re-frame.core :refer [reg-fx dispatch]]
    [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
@@ -61,7 +62,7 @@
                                        (js->clj :keywordize-keys true)
                                        (#(>evt [:signup-success %]))))))
                  (.catch (clj->js (fn [error]
-                                    ;; TODO dispatch an alert event for the user
+                                    (j/call rn/Alert :alert "Failed to signup" "Please try again")
                                     (println error))))))
            #(println %))))
 
@@ -84,7 +85,7 @@
                 (j/call :signInWithEmailAndPassword email password)
                 (j/call :then (clj->js sign-in-callback))
                 (.catch (clj->js (fn [error]
-                                   ;; TODO dispatch an alert event for the user
+                                   (j/call rn/Alert :alert "Failed to login" "Please try again")
                                    (println error)))))
            #(println %))))
 
@@ -103,3 +104,17 @@
           (-> firebase
               (j/call :auth)
               (j/call :signOut))))
+
+(reg-fx :firebase-send-password-reset-email
+        (fn [{:keys [email]}]
+          (-> firebase
+              (j/call :auth)
+              (j/call :sendPasswordResetEmail email)
+              (j/call :then
+                      (fn [_]
+                        (j/call
+                         rn/Alert :alert "📨 Reset email sent")))
+              (j/call :catch
+                      (fn [_]
+                        (j/call
+                         rn/Alert :alert "⛔ Failed to send reset email"))))))

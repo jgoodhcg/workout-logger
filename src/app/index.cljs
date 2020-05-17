@@ -95,6 +95,14 @@
          :on-press #(>evt [:login @login-form])}
         "Login"]
 
+       ;; password reset
+       [:> paper/Button
+        {:icon     "lock-question"
+         :mode     "outlined"
+         :style    (.-button styles)
+         :on-press #(>evt [:navigate :resetpassword])}
+        "Reset Password"]
+
        ;; signup
        [:> paper/Button
         {:icon     "account-plus"
@@ -150,6 +158,44 @@
          :on-press #(>evt [:navigate :login])}
         "Login"]]])))
 
+(def reset-form (r/atom {:email ""}))
+
+(defn reset-screen [props]
+  (r/as-element
+
+   (let [version         (<sub [:version])
+         theme-selection (<sub [:theme])
+         theme           (.-theme props)
+         email           (:email @reset-form)]
+
+     [:> paper/Surface {:style (.-surface styles)}
+      [:> rn/View
+
+       [:> paper/Title {:style (.-title styles)}
+        "Workout Logger"]
+
+       [:> paper/TextInput
+        {:label          "email"
+         :style          (.-input styles)
+         :default-value  email
+         :on-change-text (fn [text]
+                           (swap! reset-form #(assoc % :email text)))}]
+
+       [:> paper/Button
+        {:icon     "email-lock"
+         :mode     "contained"
+         :style    (.-buttonLogin styles)
+         :on-press #(>evt [:reset-password-email @reset-form])}
+        "Send reset email"]
+
+       ;; back to login
+       [:> paper/Button
+        {:icon     "account"
+         :mode     "outlined"
+         :style    (.-button styles)
+         :on-press #(>evt [:navigate :login])}
+        "Login"]]])))
+
 (defn stub-screen [props]
   (r/as-element
    (let [email [<sub [:email]]
@@ -182,6 +228,9 @@
        [:> nav/Scene {:key          "signup"
                       :hide-nav-bar true
                       :component    (paper/withTheme signup-screen)}]
+       [:> nav/Scene {:key          "resetpassword" ;; this blows up if the key is just "reset"
+                      :hide-nav-bar true
+                      :component    (paper/withTheme reset-screen)}]
 
        ;; app
        ;; TODO use custom component

@@ -95,6 +95,10 @@
   {:db              (dissoc (:db cofx) :user)
    :firebase-logout true})
 
+(defn reset-password-email [cofx [_ form]]
+  {:db                                 (:db cofx)
+   :firebase-send-password-reset-email form})
+
 (reg-event-db :initialize-db [standard-interceptors] initialize-db)
 (reg-event-db :set-theme [standard-interceptors] set-theme)
 (reg-event-db :set-version [standard-interceptors] set-version)
@@ -107,3 +111,4 @@
 (reg-event-fx :load-user [standard-interceptors] load-user)
 (reg-event-fx :load-user-success [standard-interceptors] load-user-success)
 (reg-event-fx :logout [standard-interceptors] logout)
+(reg-event-fx :reset-password-email [standard-interceptors] reset-password-email)
