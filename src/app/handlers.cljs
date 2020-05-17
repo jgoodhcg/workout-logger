@@ -73,23 +73,20 @@
    :firebase-login email-pass})
 
 (defn login-success [cofx [_ user]]
-  {:db       (assoc (:db cofx) :user user)
-   :navigate (if-some [last-screen (-> cofx :db :last-screen)]
-               last-screen
-               :capture)})
+  {:db       (assoc (:db cofx) :user user)})
 
 (defn signup-success [cofx [_ user]]
   {:db       (:db cofx)
    :navigate :login})
 
 (defn load-user [cofx [_ _]]
-  {:db                 (:db cofx)
+  {:db                 (-> cofx :db)
    :firebase-load-user true})
 
 (defn load-user-success [cofx [_ user]]
   {:db       (assoc (:db cofx) :user user)
    :navigate (if-some [last-screen (-> cofx :db :last-screen)]
-               (if (= last-screen :login)
+               (if (some? (some #{:login :loading} [last-screen]))
                  :capture
                  last-screen)
                :capture)})

@@ -10,6 +10,31 @@
    [clojure.spec.alpha :as s]
    [app.helpers :refer [>evt]]))
 
+(defn convert-user [user]
+  (-> user
+      (j/call :toJSON)
+      (js->clj :keywordize-keys true)
+      (select-keys [:email])))
+
+(def auth-state-subscription (atom nil))
+
+(defn auth-state-change [u]
+  (println "auth state changed")
+  (println u)
+  (if-some [user u]
+    (>evt [:load-user-success (convert-user user)])
+    (>evt [:navigate :login])))
+
+(defn auth-state-subscribe []
+  (reset! auth-state-subscription
+          (-> firebase
+              (j/call :auth)
+              (j/call :onAuthStateChanged auth-state-change))))
+
+(reg-fx :firebase-init
+        (fn [config]
+          (-> firebase (.initializeApp (clj->js config)))))
+
 (defn auth-persist [on-success on-error]
   (-> firebase
       (j/call :auth)
@@ -40,10 +65,6 @@
                                     (println error))))))
            #(println %))))
 
-(reg-fx :firebase-init
-        (fn [config]
-          (-> firebase (.initializeApp (clj->js config)))))
-
 (reg-fx :navigate
         (fn [screen]
           (j/call nav/Actions screen)))
@@ -51,10 +72,8 @@
 (defn sign-in-callback [user-cred]
   (-> user-cred
       (js->clj :keywordize-keys true)
-      (:user) ;; :credential here is always nil ???
-      ;; propbably because it is just email/pass
-      (j/call :toJSON)
-      (js->clj :keywordize-keys true)
+      (:user)
+      (convert-user)
       (#(>evt [:login-success %]))))
 
 (reg-fx :firebase-login
@@ -70,19 +89,10 @@
            #(println %))))
 
 (reg-fx :firebase-load-user
-        (fn [_]
-          (-> firebase
-              (j/call :auth)
-              (j/call :onAuthStateChanged
-                      (fn [u]
-                        (println "auth state changed")
-                        (println u)
-                        (if-some [user u]
-                          (>evt [:load-user-success
-                                 (-> user
-                                     (j/call :toJSON)
-                                     (js->clj :keywordize-keys true))])
-                          (>evt [:navigate :login])))))))
+        (fn []
+          (when-some [unsubscribable @auth-state-subscription]
+            (unsubscribable))
+          (auth-state-subscribe)))
 
 (reg-fx :firebase-logout
         (fn [_]

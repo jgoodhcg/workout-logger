@@ -215,7 +215,7 @@
 (defn start
   {:dev/after-load true}
   []
-  (dispatch-sync [:load-user])
+  (dispatch [:load-user])
   (expo/render-root (r/as-element [root])))
 
 (def version (-> expo-constants
@@ -228,6 +228,5 @@
   (dispatch-sync [:initialize-db])
   (dispatch-sync [:initialize-firebase firebase-config])
   (dispatch-sync [:set-version version])
-  (dispatch-sync [:load-user])
   (start))
 
