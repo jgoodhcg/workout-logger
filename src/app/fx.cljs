@@ -90,6 +90,10 @@
 
 (reg-fx :firebase-load-user
         (fn []
+          ;; this is call ever time `app.index/start` is called
+          ;; unsubscribe is needed so that hot reloading doesn't add multiple callbacks
+          ;; it needs to resubscribe on hot reload to trigger an action to move the user past the loading screen
+          ;; this isn't ideal and to fix would require moving navigation to entirely within app-db
           (when-some [unsubscribable @auth-state-subscription]
             (unsubscribable))
           (auth-state-subscribe)))
