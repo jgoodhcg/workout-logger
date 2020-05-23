@@ -218,11 +218,11 @@
       [:> nav/Stack {:key "root"}
 
        [:> nav/Scene {:key "loading"
-                      :initial true
                       :hide-nav-bar true
                       :component (paper/withTheme stub-screen) :title "loading"}]
        ;; auth
        [:> nav/Scene {:key          "login"
+                      :initial true
                       :hide-nav-bar true
                       :component    (paper/withTheme login-screen)}]
        [:> nav/Scene {:key          "signup"

@@ -11,6 +11,8 @@
    [clojure.spec.alpha :as s]
    [app.helpers :refer [>evt]]))
 
+(def auth (atom nil))
+
 (defn convert-user [user]
   (-> user
       (j/call :toJSON)
@@ -34,7 +36,8 @@
 
 (reg-fx :firebase-init
         (fn [config]
-          (-> firebase (.initializeApp (clj->js config)))))
+          (-> firebase (.initializeApp (clj->js config)))
+          (reset! auth (-> firebase (j/call :auth)))))
 
 (defn auth-persist [on-success on-error]
   (-> firebase
