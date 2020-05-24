@@ -9,17 +9,14 @@
    [re-frame.core :refer [reg-fx dispatch]]
    [com.rpl.specter :as sp :refer [select select-one setval transform selected-any?]]
    [clojure.spec.alpha :as s]
-   [app.helpers :refer [>evt]]))
-
-(def auth (atom nil))
+   [app.helpers :refer [>evt]]
+   [app.fx-atoms :refer [auth auth-state-subscription]]))
 
 (defn convert-user [user]
   (-> user
       (j/call :toJSON)
       (js->clj :keywordize-keys true)
       (select-keys [:email])))
-
-(def auth-state-subscription (atom nil))
 
 (defn auth-state-change [u]
   (println "auth state changed")
@@ -29,21 +26,25 @@
     (>evt [:navigate :login])))
 
 (defn auth-state-subscribe []
+  (println "auth state subscribe")
+  (println @auth)
   (reset! auth-state-subscription
-          (-> firebase
-              (j/call :auth)
+          (-> @auth
               (j/call :onAuthStateChanged auth-state-change))))
 
 (reg-fx :firebase-init
         (fn [config]
+          (println "firebase init")
           (-> firebase (.initializeApp (clj->js config)))
-          (reset! auth (-> firebase (j/call :auth)))))
+          (println @auth)
+          (reset! auth (-> firebase (j/call :auth)))
+          (println @auth)
+          (println "firebase init end")))
 
 (defn auth-persist [on-success on-error]
-  (-> firebase
-      (j/call :auth)
+  (-> @auth
       (j/call :setPersistence (-> firebase
-                                  (j/get :auth)
+                                  (j/get :auth) ;; "get" not "call"
                                   (j/get :Auth)
                                   (j/get :Persistence)
                                   (j/get :LOCAL)))
@@ -83,8 +84,7 @@
 (reg-fx :firebase-login
         (fn [{:keys [email password]}]
           (auth-persist
-           #(-> firebase
-                (j/call :auth)
+           #(-> @auth
                 (j/call :signInWithEmailAndPassword email password)
                 (j/call :then (clj->js sign-in-callback))
                 (.catch (clj->js (fn [error]
@@ -94,24 +94,23 @@
 
 (reg-fx :firebase-load-user
         (fn []
-          ;; this is call ever time `app.index/start` is called
-          ;; unsubscribe is needed so that hot reloading doesn't add multiple callbacks
-          ;; it needs to resubscribe on hot reload to trigger an action to move the user past the loading screen
-          ;; this isn't ideal and to fix would require moving navigation to entirely within app-db
+          ;; When a callback is first registered to `onAuthStateChanged` it is called with the current auth state.
+          ;; Then it is called when users are logged in or out.
+          ;; Navigation is not derived from re-frame state so every hot reload will put the user on the initial page (:loading)
+          ;; To get the user off the loading page we re-subscribe the `onAuthStateChanged` callback to trigger "loading the user" and instigating a navigation effect.
+          ;; The unsubscribe is needed to keep callbacks from building up over multiple reloads.
           (when-some [unsubscribable @auth-state-subscription]
             (unsubscribable))
           (auth-state-subscribe)))
 
 (reg-fx :firebase-logout
         (fn [_]
-          (-> firebase
-              (j/call :auth)
+          (-> @auth
               (j/call :signOut))))
 
 (reg-fx :firebase-send-password-reset-email
         (fn [{:keys [email]}]
-          (-> firebase
-              (j/call :auth)
+          (-> @auth
               (j/call :sendPasswordResetEmail email)
               (j/call :then
                       (fn [_]
